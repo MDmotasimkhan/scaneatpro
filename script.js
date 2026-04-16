@@ -1,35 +1,44 @@
 let cart = {}; 
-let globalTotal = 0;
-const myWhatsApp = "917369979705"; // Khan bhai ka number
+const myWhatsApp = "917369979705";
 
 function toggleCart() { document.getElementById('cart-drawer').classList.toggle('open'); }
 function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
-function searchMenu() {
-    let q = document.getElementById('menuSearch').value.toLowerCase();
-    document.querySelectorAll('.category-item').forEach(i => {
-        let name = i.querySelector('.item-name').innerText.toLowerCase();
-        i.style.display = name.includes(q) ? 'block' : 'none';
+// VEG / NON-VEG FILTER WAPAS AA GAYA
+function filterMenu(type) {
+    document.querySelectorAll('.btn-f').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    let items = document.querySelectorAll('.category-item');
+    items.forEach(item => {
+        if (type === 'all' || item.getAttribute('data-type') === type) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
     });
 }
 
-function filterMenu(type) {
-    document.querySelectorAll('.btn-f').forEach(b => b.classList.remove('active'));
-    if(event) event.target.classList.add('active');
-    document.querySelectorAll('.category-item').forEach(item => {
-        item.style.display = (type === 'all' || item.getAttribute('data-type') === type) ? 'block' : 'none';
+function searchMenu() {
+    let input = document.getElementById('menuSearch').value.toLowerCase();
+    let items = document.querySelectorAll('.category-item');
+    items.forEach(item => {
+        let name = item.querySelector('.item-name').innerText.toLowerCase();
+        item.style.display = name.includes(input) ? "block" : "none";
     });
 }
 
 function addToCart(name, price) {
-    if(cart[name]) cart[name].qty++; 
-    else cart[name] = { price: price, qty: 1 };
+    if (cart[name]) { cart[name].qty += 1; } 
+    else { cart[name] = { price: price, qty: 1 }; }
     updateUI();
 }
 
 function removeFromCart(name) {
-    if(cart[name] && cart[name].qty > 1) cart[name].qty--; 
-    else delete cart[name];
+    if (cart[name]) {
+        if (cart[name].qty > 1) { cart[name].qty -= 1; } 
+        else { delete cart[name]; }
+    }
     updateUI();
 }
 
@@ -37,46 +46,68 @@ function updateUI() {
     let list = document.getElementById('cart-items-list');
     let totalP = document.getElementById('cart-total-price');
     let badge = document.getElementById('cart-count');
-    list.innerHTML = ""; let sub = 0; let count = 0;
-    for(let name in cart) {
-        sub += cart[name].price * cart[name].qty; count += cart[name].qty;
-        list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
-            <span>${name}</span>
-            <div><button onclick="removeFromCart('${name}')">-</button> ${cart[name].qty} <button onclick="addToCart('${name}',${cart[name].price})">+</button></div>
-        </div>`;
+    let footer = document.getElementById('footer-notification');
+    let footerCount = document.getElementById('footer-count');
+    let footerTotal = document.getElementById('footer-total');
+
+    document.querySelectorAll('.qty-count').forEach(s => s.innerText = "0");
+
+    list.innerHTML = "";
+    let totalAmount = 0;
+    let totalItems = 0;
+
+    for (let name in cart) {
+        let item = cart[name];
+        totalAmount += item.price * item.qty;
+        totalItems += item.qty;
+
+        let menuLabel = document.getElementById(`qty-${name}`);
+        if (menuLabel) menuLabel.innerText = item.qty;
+
+        list.innerHTML += `
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px; padding:5px; border-bottom:1px solid #eee;">
+                <span>${name} x ${item.qty}</span>
+                <span>₹${item.price * item.qty}</span>
+            </div>`;
     }
-    badge.innerText = count; totalP.innerText = "₹" + sub; globalTotal = sub;
+
+    badge.innerText = totalItems;
+    totalP.innerText = "₹" + totalAmount;
+
+    if (totalItems > 0) {
+        footer.style.display = 'flex';
+        footerCount.innerText = totalItems + " Items";
+        footerTotal.innerText = "₹" + totalAmount;
+    } else {
+        footer.style.display = 'none';
+    }
+}
+
+function callWaiter() {
+    let table = prompt("Table Number?");
+    if (table) { window.open(`https://wa.me/${myWhatsApp}?text=🛎️ CALL WAITER! Table: ${table}`, '_blank'); }
 }
 
 function openOrderPopup() {
-    if(Object.keys(cart).length === 0) return alert("Bhai, cart khali hai!");
+    if (Object.keys(cart).length === 0) return alert("Cart khali hai!");
     document.getElementById('order-modal').style.display = 'flex';
 }
+
 function closeOrderPopup() { document.getElementById('order-modal').style.display = 'none'; }
 
-// NAYA FEATURE: CALL WAITER
-function callWaiter() {
-    let table = prompt("Kon si table par waiter bhejna hai? (Table No. likhen)");
-    if(table) {
-        let msg = `*🛎️ CALL WAITER! *\n\n🪑 *Table No:* ${table}\n📢 *Message:* Customer is calling for service.\n------------------------------\n_Sent via ScanEatPro_`;
-        alert("✅ Waiter ko bulaya ja raha hai...");
-        window.open(`https://wa.me/${myWhatsApp}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-}
-
-// FINAL ORDER
 function confirmFinalOrder() {
     let table = document.getElementById('table-no').value;
-    let payment = document.getElementById('payment-mode').value;
-    if(!table) return alert("Bhai, Table Number bharna zaroori hai!");
+    let pay = document.getElementById('payment-mode').value;
+    if (!table) return alert("Table Number bhariye!");
 
-    let orderNo = Math.floor(1000 + Math.random() * 9000);
-    let itemDetails = "";
-    for(let name in cart) { itemDetails += `✅ *${name}* (Qty: ${cart[name].qty})\n`; }
+    let details = "*--- ORDER ---*\nTable: " + table + "\nPayment: " + pay + "\n\n";
+    let total = 0;
+    for (let name in cart) {
+        details += `✅ ${name} (${cart[name].qty})\n`;
+        total += cart[name].price * cart[name].qty;
+    }
+    details += "\n*Total: ₹" + total + "*";
 
-    let fullMsg = `*--- 🥘 LAZEEZ BIRYANI ORDER ---*\n\n🆔 *Order ID:* #${orderNo}\n🪑 *Table No:* ${table}\n💰 *Total Bill:* ₹${globalTotal}\n💳 *Payment:* ${payment}\n\n*🛒 Items:*\n${itemDetails}\n------------------------------\n✨ *THANK YOU FOR ORDERING!* ✨\n\nAapka swadisht khana taiyar ho raha hai. 😊\n------------------------------\n_Order by Khan's ScanEatPro_`;
-
-    window.open(`https://wa.me/${myWhatsApp}?text=${encodeURIComponent(fullMsg)}`, '_blank');
+    window.open(`https://wa.me/${myWhatsApp}?text=${encodeURIComponent(details)}`, '_blank');
     cart = {}; updateUI(); closeOrderPopup();
-    if(document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
 }
