@@ -21,7 +21,6 @@
             <div class="header-right">
                 <i class="fa-solid fa-bell" onclick="callWaiter()" id="waiter-bell"></i>
                 <i class="fa-solid fa-moon" onclick="toggleDarkMode()" style="cursor:pointer; font-size:20px;"></i>
-                
                 <div class="nav-item cart-btn" onclick="toggleCart()" style="display: flex; flex-direction: column; align-items: center; position: relative;">
                     <i class="fa-solid fa-bag-shopping" style="font-size: 20px;"></i>
                     <span style="font-size: 10px; font-weight: bold; margin-top: 2px;">Cart</span>
@@ -191,12 +190,19 @@
 
     <div id="order-modal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="color:#d62300">Confirm Order</h3>
+            <h3 style="color:#d62300; margin-bottom:15px;">Confirm Order</h3>
             <input type="number" id="table-no" placeholder="Table Number">
-            <select id="payment-mode">
-                <option value="Cash">Cash</option>
-                <option value="Online">Online</option>
+            <select id="payment-mode" onchange="checkPaymentMode()">
+                <option value="Cash">Cash (Counter par)</option>
+                <option value="Online">Online Payment</option>
             </select>
+
+            <div id="qr-display" style="display:none; margin:15px 0;">
+                <p style="font-size:12px; color:#d62300; font-weight:bold; margin-bottom:5px;">Scan & Pay Below:</p>
+                <img src="payment-qr.jpg" alt="Payment QR" style="width:160px; height:160px; border:1px solid #ddd; border-radius:10px;">
+                <p style="font-size:10px; color:#666; margin-top:5px;">Payment ke baad WhatsApp confirm karein</p>
+            </div>
+
             <button class="confirm-btn" onclick="confirmFinalOrder()">Confirm WhatsApp</button>
             <button class="cancel-btn" onclick="closeOrderPopup()">Cancel</button>
         </div>
