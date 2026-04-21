@@ -7,9 +7,8 @@ function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
 
 function filterMenu(type) {
     document.querySelectorAll('.btn-f').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    let items = document.querySelectorAll('.category-item');
-    items.forEach(item => {
+    if (event) event.target.classList.add('active');
+    document.querySelectorAll('.category-item').forEach(item => {
         item.style.display = (type === 'all' || item.getAttribute('data-type') === type) ? 'block' : 'none';
     });
 }
@@ -61,11 +60,6 @@ function updateUI() {
     if(count > 0) { footerCount.innerText = count + " Items"; footerTotal.innerText = "₹" + sub; }
 }
 
-function checkPaymentMode() {
-    let mode = document.getElementById('payment-mode').value;
-    document.getElementById('qr-display').style.display = (mode === 'Online') ? 'block' : 'none';
-}
-
 function callWaiter() {
     let table = prompt("Table Number?");
     if (table) window.open(`https://wa.me/${myWhatsApp}?text=🛎️ CALL WAITER! Table: ${table}`, '_blank');
@@ -80,12 +74,24 @@ function closeOrderPopup() { document.getElementById('order-modal').style.displa
 function confirmFinalOrder() {
     let table = document.getElementById('table-no').value;
     let pay = document.getElementById('payment-mode').value;
-    if (!table) return alert("Table No daaliye!");
+    if (!table) return alert("Table Number daaliye!");
 
-    let details = "*--- 🥘 LAZEEZ BIRYANI ORDER ---*\nTable: " + table + "\nPayment: " + pay + "\n\n";
-    for (let name in cart) { details += `✅ ${name} (${cart[name].qty})\n`; }
-    details += "\n*Total: ₹" + globalTotal + "*\n\n*Order confirm kar ka bill counter sa lalejea. Thank You!*";
+    let details = "*--- 🥘 LAZEEZ BIRYANI & HOTEL ---*\n";
+    details += `📍 *Table No:* ${table}\n`;
+    details += `💰 *Payment Mode:* ${pay}\n\n`;
+    details += "*Selected Items:*\n";
+
+    for (let name in cart) {
+        details += `✅ ${name} (${cart[name].qty}) - ₹${cart[name].price * cart[name].qty}\n`;
+    }
+
+    details += `\n*Total Bill: ₹${globalTotal}*\n`;
+    details += "--------------------------\n";
+    details += "*Order successfully receive ho gaya hai. Please counter se apna bill le lijiye. Thank you for choosing Lazeez Biryani and hotel* 🙏";
 
     window.open(`https://wa.me/${myWhatsApp}?text=${encodeURIComponent(details)}`, '_blank');
-    cart = {}; updateUI(); closeOrderPopup();
+    
+    cart = {}; 
+    updateUI(); 
+    closeOrderPopup();
 }
